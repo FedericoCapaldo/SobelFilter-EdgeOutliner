@@ -7,7 +7,9 @@
 #include <iostream>
 #include <vector>
 #include <mutex>
+#include <vector>
 #include <thread>
+using namespace std;
 
 /* Global variables, Look at their usage in main() */
 int image_height;
@@ -18,12 +20,109 @@ int outputImage[1000][1000];
 int num_threads;
 int chunkSize;
 int maxChunk;
+int nextChunk;
+mutex chunckIncrease;
+
+// cout << "yo: " << i << endl;
+// cout << "chunkSize: " << chunkSize << endl;
+// cout << "image_height: " << image_height << endl;
+// cout << "image_width: " << image_wid
+// cout << "chunkSize: " << chunkSize << endl;
+// cout << "image_height: " << image_height << endl;
+// cout << "image_width: " << image_width << endl;
+// cout << "maxChunk: " << maxChunk << endlth << endl;
+// cout << "maxChunk: " << maxChunk << endl;
+
+/*
+1. while chunks are left
+2. increase chunk count with mutex
+3. given the height, caclulate the range of lines in this chunck
+4. create the 2 sobel masks
+5. filter the masks (inverting colors) and add value to output array
+*/
+
+void applyFilter() {
+
+  cout << "applyin" << endl;
+  int maskX[3][3];
+  int maskY[3][3];
+
+  maskX[0][0] = -1; maskX[0][1] = 0; maskX[0][2] = 1;
+  maskX[1][0] = -2; maskX[1][1] = 0; maskX[1][2] = 2;
+  maskX[2][0] = -1; maskX[2][1] = 0; maskX[2][2] = 1;
+
+  maskY[0][0] = 1; maskY[0][1] = 2; maskY[0][2] = 1;
+  maskY[1][0] = 0; maskY[1][1] = 0; maskY[1][2] = 0;
+  maskY[2][0] = -1; maskY[2][1] = -2; maskY[2][2] = -1;
+
+
+  for (int x = 0; x < image_height; ++x) {
+    for (int y = 0; y < image_width; ++y) {
+      int sumx = 0;
+      int sumy = 0;
+      int sum = 0;
+
+      if(x == 0 || x == (image_height -1) || y == 0 || y == (image_width -1)) {
+        sum = 0;
+      } else {
+        /* Gradient calculation in X Dimension */
+        for (int i=-1; i <= 1; i++) {
+          for (int j = -1; j <= 1; j++) {
+            sumx += inputImage[x+i][y+j] * maskX[i+1][j+1];
+          }
+        }
+
+        /* Gradient calculation in Y Dimension */
+        for (int i=-1; i <= 1; i++) {
+          for (int j = -1; j <= 1; j++) {
+            sumy += inputImage[x+i][y+j] * maskY[i+1][j+1];
+          }
+        }
+        sum = abs(sumx) + abs(sumy);
+      }
+
+      if (sum < 0) {
+        sum = 0;
+      }
+      if (sum > 255) {
+        sum = 255;
+      }
+
+      outputImage[x][y] = sum;
+    }
+  }
+
+  // while (nextChunk < maxChunk) {
+  //   // chunckIncrease.lock();
+  //   ++nextChunk;
+  //   cout << "CHUNK " << nextChunk << ". ";
+  //   for (int i = 0; i < 10; i++) {
+  //     cout << a;
+  //   }
+  //   cout << endl;
+  //   // chunckIncrease.unlock();
+  // }
+
+}
+
 
 /* ****************Change and add functions below ***************** */
 void dispatch_threads()
 {
-
+  applyFilter();
+  // cout << "dispatching threads" << endl;
+  // vector<thread> threads;
+  // for (int i=0; i < num_threads; i++) {
+  //   threads.push_back(thread(&dostuff, i));
+  // }
+  //
+  // for (auto& thrd : threads) {
+  //   if(thrd.joinable()) {
+  //     thrd.join();
+  //   }
+  // }
 }
+
 
 /* ****************Need not to change the function below ***************** */
 
