@@ -25,16 +25,6 @@ int maskX[3][3];
 int maskY[3][3];
 mutex chunckIncrease;
 
-// cout << "yo: " << i << endl;
-// cout << "chunkSize: " << chunkSize << endl;
-// cout << "image_height: " << image_height << endl;
-// cout << "image_width: " << image_wid
-// cout << "chunkSize: " << chunkSize << endl;
-// cout << "image_height: " << image_height << endl;
-// cout << "image_width: " << image_width << endl;
-// cout << "maxChunk: " << maxChunk << endlth << endl;
-// cout << "maxChunk: " << maxChunk << endl;
-
 /*
 1. while chunks are left
 2. increase chunk count with mutex
@@ -71,8 +61,7 @@ void filter(int start_point, int end_point) {
 
       if (sum < 0) {
         sum = 0;
-      }
-      if (sum > 255) {
+      } else if (sum > 255) {
         sum = 255;
       }
 
@@ -82,11 +71,11 @@ void filter(int start_point, int end_point) {
 }
 
 void applyFilter(int w) {
-
+  /* 3x3 Sobel mask for X Dimension. */
   maskX[0][0] = -1; maskX[0][1] = 0; maskX[0][2] = 1;
   maskX[1][0] = -2; maskX[1][1] = 0; maskX[1][2] = 2;
   maskX[2][0] = -1; maskX[2][1] = 0; maskX[2][2] = 1;
-
+  /* 3x3 Sobel mask for Y Dimension. */
   maskY[0][0] = 1; maskY[0][1] = 2; maskY[0][2] = 1;
   maskY[1][0] = 0; maskY[1][1] = 0; maskY[1][2] = 0;
   maskY[2][0] = -1; maskY[2][1] = -2; maskY[2][2] = -1;
@@ -104,18 +93,6 @@ void applyFilter(int w) {
     }
     filter(start_point, end_point);
   }
-
-  // while (nextChunk < maxChunk) {
-  //   // chunckIncrease.lock();
-  //   ++nextChunk;
-  //   cout << "CHUNK " << nextChunk << ". ";
-  //   for (int i = 0; i < 10; i++) {
-  //     cout << a;
-  //   }
-  //   cout << endl;
-  //   // chunckIncrease.unlock();
-  // }
-
 }
 
 
