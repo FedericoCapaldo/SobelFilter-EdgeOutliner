@@ -20,7 +20,9 @@ int outputImage[1000][1000];
 int num_threads;
 int chunkSize;
 int maxChunk;
-int nextChunk;
+int chunkNumber = 0;
+int maskX[3][3];
+int maskY[3][3];
 mutex chunckIncrease;
 
 // cout << "yo: " << i << endl;
@@ -41,22 +43,8 @@ mutex chunckIncrease;
 5. filter the masks (inverting colors) and add value to output array
 */
 
-void applyFilter() {
-
-  cout << "applyin" << endl;
-  int maskX[3][3];
-  int maskY[3][3];
-
-  maskX[0][0] = -1; maskX[0][1] = 0; maskX[0][2] = 1;
-  maskX[1][0] = -2; maskX[1][1] = 0; maskX[1][2] = 2;
-  maskX[2][0] = -1; maskX[2][1] = 0; maskX[2][2] = 1;
-
-  maskY[0][0] = 1; maskY[0][1] = 2; maskY[0][2] = 1;
-  maskY[1][0] = 0; maskY[1][1] = 0; maskY[1][2] = 0;
-  maskY[2][0] = -1; maskY[2][1] = -2; maskY[2][2] = -1;
-
-
-  for (int x = 0; x < image_height; ++x) {
+void filter(int start_point, int end_point) {
+  for (int x = start_point; x < end_point; ++x) {
     for (int y = 0; y < image_width; ++y) {
       int sumx = 0;
       int sumy = 0;
@@ -91,6 +79,31 @@ void applyFilter() {
       outputImage[x][y] = sum;
     }
   }
+}
+
+void applyFilter(int w) {
+
+  maskX[0][0] = -1; maskX[0][1] = 0; maskX[0][2] = 1;
+  maskX[1][0] = -2; maskX[1][1] = 0; maskX[1][2] = 2;
+  maskX[2][0] = -1; maskX[2][1] = 0; maskX[2][2] = 1;
+
+  maskY[0][0] = 1; maskY[0][1] = 2; maskY[0][2] = 1;
+  maskY[1][0] = 0; maskY[1][1] = 0; maskY[1][2] = 0;
+  maskY[2][0] = -1; maskY[2][1] = -2; maskY[2][2] = -1;
+
+  while (maxChunk > 0) {
+    chunckIncrease.lock();
+    int start_point = chunkNumber * chunkSize;
+    int end_point = min((start_point + chunkSize), image_height);
+    ++chunkNumber;
+    -- maxChunk;
+    chunckIncrease.unlock();
+
+    if(maxChunk < 0) {
+      break;
+    }
+    filter(start_point, end_point);
+  }
 
   // while (nextChunk < maxChunk) {
   //   // chunckIncrease.lock();
@@ -106,21 +119,22 @@ void applyFilter() {
 }
 
 
+
+
 /* ****************Change and add functions below ***************** */
 void dispatch_threads()
 {
-  applyFilter();
   // cout << "dispatching threads" << endl;
-  // vector<thread> threads;
-  // for (int i=0; i < num_threads; i++) {
-  //   threads.push_back(thread(&dostuff, i));
-  // }
-  //
-  // for (auto& thrd : threads) {
-  //   if(thrd.joinable()) {
-  //     thrd.join();
-  //   }
-  // }
+  vector<thread> threads;
+  for (int i=0; i < num_threads; i++) {
+    threads.push_back(thread(&applyFilter, i));
+  }
+
+  for (auto& thrd : threads) {
+    if(thrd.joinable()) {
+      thrd.join();
+    }
+  }
 }
 
 
@@ -151,7 +165,7 @@ int main(int argc, char* argv[])
     /* Remove comments '#' and check image format */
     while(std::getline(file,workString))
     {
-        if( workString.at(0) != '#' ){
+      if( workString.at(0) != '#' ){
             if( workString.at(1) != '2' ){
                 std::cout << "Input image is not a valid PGM image" << std::endl;
                 return 0;
